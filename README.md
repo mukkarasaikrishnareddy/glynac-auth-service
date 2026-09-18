@@ -1,63 +1,118 @@
+# Glynac Auth Service — CI/CD Demo
 
-# Glynac Auth Service — CI/CD
+A personal learning project to build a containerized authentication service and progressively implement a secure CI/CD workflow with environment-specific deployment configuration.
 
-CI/CD configuration and deployment infrastructure for the Glynac Authentication Service.
+> **Project status:** Development in progress. This is a demo scaffold using Flask and SQLite. It is not connected to any organization's infrastructure.
 
-## Project Objectives
+## Tech Stack
 
-- Automate continuous integration and deployment.
-- Separate development, staging, and production environments.
-- Deploy workloads to HashiCorp Nomad.
-- Manage application secrets using HashiCorp Vault.
-- Use Docker Hub for container image distribution.
-- Maintain separate databases for each environment.
-- Protect staging and production deployments with approval requirements.
+* Python
+* Flask
+* Flask-SQLAlchemy
+* Flask-Migrate / Alembic
+* SQLite (local development)
+* Docker
+* Pytest
 
-## Environments
+## Current Features
 
-| Environment | Nomad Namespace | Vault Secret Prefix |
-|---|---|---|
-| Development | ai-service-dev | secret/ai-service/dev |
-| Staging | ai-service-staging | secret/ai-service/staging |
-| Production | ai-service-prod | secret/ai-service/prod |
+* Flask application factory
+* Environment-based configuration for development, staging, and production
+* Health endpoint: `GET /health`
+* Readiness endpoint with database connectivity check: `GET /ready`
+* Database check endpoint: `GET /api/db-check`
+* User registration endpoint: `POST /api/register`
+* SQLAlchemy `User` model with unique email addresses
+* Database migrations initialized and applied
+* Duplicate registration returns HTTP `409 Conflict`
+* Basic health and readiness tests
 
-## Backend Service Namespaces
+## API Endpoints
 
-| Environment | Nomad Namespace |
-|---|---|
-| Development | be-service-dev |
-| Staging | be-service-staging |
-| Production | be-service-prod |
+| Method | Endpoint        | Purpose                                      |
+| ------ | --------------- | -------------------------------------------- |
+| GET    | `/health`       | Checks whether the application responds      |
+| GET    | `/ready`        | Checks database connectivity                 |
+| GET    | `/api/db-check` | Checks whether the users table is accessible |
+| POST   | `/api/register` | Registers a user using an email              |
 
-## Infrastructure
+### Registration example
 
-- GitHub Actions — CI/CD automation
-- Docker — application containerization
-- Docker Hub — container image registry
-- HashiCorp Nomad — workload scheduling
-- HashiCorp Vault — secrets management
-- Database — isolated Auth Service databases per environment
+Request:
 
-## Deployment Workflow
+```json
+{
+  "email": "demo@example.com"
+}
+```
 
-1. Validate and test application changes.
-2. Build the Docker image.
-3. Publish the image to Docker Hub.
-4. Select the target GitHub Environment.
-5. Retrieve environment-specific configuration and credentials.
-6. Deploy to the corresponding Nomad namespace.
-7. Verify deployment health.
+Successful registration returns HTTP `201 Created`. Registering the same email again returns HTTP `409 Conflict`.
 
-## Security
+## Local Setup
 
-- Keep credentials out of source code.
-- Use GitHub Environment secrets for deployment tokens.
-- Require approval before staging and production deployments.
-- Restrict Nomad and Vault permissions according to environment.
-- Do not store production credentials in this repository.
+### 1. Install dependencies
 
-## Status
+```powershell
+python -m pip install -r requirements.txt
+```
 
-Initial repository setup.
+### 2. Run database migrations
 
-Deployment configuration, application details, database configuration, and infrastructure endpoints will be documented as they are verified.
+```powershell
+python -m flask --app run.py db upgrade
+```
+
+### 3. Start the application
+
+```powershell
+python run.py
+```
+
+The application runs locally on port `5000`.
+
+## Run Tests
+
+```powershell
+python -m pytest -v
+```
+
+## Docker
+
+Build the image:
+
+```powershell
+docker build -t glynac-auth-service:dev .
+```
+
+Run the container:
+
+```powershell
+docker run --rm -p 5000:5000 glynac-auth-service:dev
+```
+
+## Environment Plan
+
+Planned demo environments:
+
+* **dev**
+* **staging**
+* **prod**
+
+Planned environment-specific configuration includes Nomad addresses and namespaces, Vault secret prefixes, and deployment credentials. These are project targets only; no organization infrastructure or credentials are configured.
+
+## Security and Development Notes
+
+* Password hashing and login are **not implemented yet**.
+* The current registration endpoint stores email only.
+* The local fallback secret is for development only.
+* Do not commit real secrets, passwords, tokens, or `.env` files.
+* Production database integration, authentication, authorization, rate limiting, and deployment protections remain future work.
+
+## Next Steps
+
+1. Add password hashing to the user model and registration flow.
+2. Add input validation and authentication tests.
+3. Implement login and token handling.
+4. Review error handling and security controls.
+5. Continue Docker and CI/CD setup.
+6. Plan environment-specific deployment configuration.

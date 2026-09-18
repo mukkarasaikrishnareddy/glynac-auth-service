@@ -42,74 +42,16 @@ jobs:
           from pathlib import Path
           import yaml
 
-          workflow_files = list(
-              Path(".github/workflows").glob("*.yml")
-          ) + list(
-              Path(".github/workflows").glob("*.yaml")
-          )
+          workflow_dir = Path(".github/workflows")
+          files = list(workflow_dir.glob("*.yml"))
+          files += list(workflow_dir.glob("*.yaml"))
 
-          if not workflow_files:
+          if not files:
               raise SystemExit("No workflow YAML files found.")
 
-          for file in workflow_files:
+          for file in files:
               with file.open(encoding="utf-8") as stream:
                   yaml.safe_load(stream)
-              print(f"Valid YAML: {file}")
-          PY
-name: Auth Service CI
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-jobs:
-  repository-checks:
-    name: Validate repository
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Verify required files
-        run: |
-          test -f README.md
-          test -f .gitignore
-          echo "Required repository files exist."
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install YAML parser
-        run: python -m pip install PyYAML
-
-      - name: Validate workflow YAML syntax
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import yaml
-
-          workflow_files = list(
-              Path(".github/workflows").glob("*.yml")
-          ) + list(
-              Path(".github/workflows").glob("*.yaml")
-          )
-
-          if not workflow_files:
-              raise SystemExit("No workflow YAML files found.")
-
-          for file in workflow_files:
-              with file.open(encoding="utf-8") as stream:
-                  yaml.safe_load(stream)
               print(f"Valid YAML: {file}")
           PY
