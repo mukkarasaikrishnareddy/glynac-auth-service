@@ -36,25 +36,71 @@ def db_check():
         return jsonify({"database": "error"}), 503
 
 
+
+
 @auth_bp.route("/api/register", methods=["POST"])
 def register():
     data = request.get_json(silent=True) or {}
-    email = data.get("email")
 
-    if not isinstance(email, str) or not email.strip():
-        return jsonify({"error": "A valid email is required"}), 400
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
 
-    email = email.strip().lower()
+    # Check required fields first
+    if not email or not password:
+        return jsonify({
+            "error": "Email and password are required"
+        }), 400
+
+    # Then validate password length
+    if len(password) < 8:
+        return jsonify({
+            "error": "Password must be at least 8 characters"
+        }), 400
 
     existing_user = User.query.filter_by(email=email).first()
+
     if existing_user:
-        return jsonify({"error": "Email already registered"}), 409
+        return jsonify({
+            "error": "Email already registered"
+        }), 409
 
     user = User(email=email)
+    user.set_password(password)
+
     db.session.add(user)
     db.session.commit()
 
     return jsonify({
-        "message": "User registered",
-        "user_id": user.id
+        "message": "Registration successful",
+        "user": {
+            "id": user.id,
+            "email": user.email
+        }
     }), 201
+
+@auth_bp.route("/api/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True) or {}
+
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    if not email or not password:
+        return jsonify({
+            "error": "Email and password are required"
+        }), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user or not user.check_password(password):
+        return jsonify({
+            "error": "Invalid email or password"
+        }), 401
+
+    return jsonify({
+        "message": "Login successful",
+        "user": {
+            "id": user.id,
+            "email": user.email
+        }
+    }), 200

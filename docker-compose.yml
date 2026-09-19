@@ -1,0 +1,17 @@
+services:
+  auth-service:
+    build: .
+    image: glynac-auth-service:1.0
+    container_name: glynac-auth-container
+    ports:
+      - "5000:5000"
+    environment:
+      APP_ENV: development
+      DATABASE_URL: sqlite:////app/instance/auth.db
+      SECRET_KEY: local-demo-secret-change-me
+    volumes:
+      - auth-data:/app/instance
+    restart: unless-stopped
+
+volumes:
+  auth-data:
