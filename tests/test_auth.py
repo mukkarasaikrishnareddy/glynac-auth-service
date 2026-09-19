@@ -8,28 +8,23 @@ from app.models import User
 
 @pytest.fixture
 def client():
-    app = create_app()
-
-    app.config.update(
-        TESTING=True,
-        SQLALCHEMY_DATABASE_URI="sqlite://",
-    )
+    app = create_app({
+        "TESTING": True,
+        "SQLALCHEMY_DATABASE_URI": "sqlite://",
+    })
 
     with app.app_context():
         db.create_all()
 
         user = User(email="test@example.com")
         user.set_password("TestPass123!")
-
         db.session.add(user)
         db.session.commit()
 
-        with app.test_client() as test_client:
-            yield test_client
+        yield app.test_client()
 
         db.session.remove()
         db.drop_all()
-
 
 # -------------------------
 # Login tests
